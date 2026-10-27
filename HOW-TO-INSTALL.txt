@@ -1,0 +1,19 @@
+EXPANDICA - OUR FAMILY EXPANSION
+================================
+A sister app to Healthica, Hortica, Saturnica, Backpackica, Campica and Roadtripica. Works on iPhone and Android and works offline once opened.
+
+INSTALL: same as the other Occultica apps. Drag the "Expandica" folder onto https://app.netlify.com/drop, open the https link on your phone, Share > Add to Home Screen (iPhone) or menu > Install app (Android). Open it once with signal. Put it on the SAME site as the other apps (see Occultica-Household) to link them.
+
+THE JOURNEY: Scouted > Visited > Under contract > Owned > Cabin planned > Cabin built > Stop open.
+TABS
+- Map: your parcels on an offline US map, stage buttons, "scout from a campground" (uses the camp list from Campica), and the Family Circuit: miles between your stops and a hint of where a gap is worth scouting.
+- Land (also Compare: a side-by-side sheet, never a verdict): a 59-item due-diligence checklist per parcel, red flags, a carrying-cost calculator (your numbers only), official lookup links and state notes.
+- Power: off-grid sizing for a small cabin: loads, panel watts, battery, inverter, and a check against a portable power station you describe.
+- Build: cabin stage checklist, permit path, firepit and fire safety, first-weekend and closing-up kits, a cost planner, a build log with photos and receipts, and Care reminders (closing up, tax and insurance dates you enter).
+- Coast: coast-to-coast corridors, stop zones about a day's drive apart, states collected, and a Budget view (how many sites for 8 to 12 hour legs, cost tiers, all your own assumptions).
+- Quests: family level, badges, Stop Passport, savings goal, kid scout cards, household card.
+
+THINGS TO KNOW
+- Not legal, tax, financial, surveying or engineering advice. It never says a parcel is a good buy. Prices, taxes and rules come from the county and licensed professionals.
+- State notes cover fire/burn info for about 30 states and a few land hazards; the rest say "check with the county". Sun-hour figures are rough secondary data; use NREL PVWatts for real sizing.
+- Everything stays on the phone. Use the menu (gear) > Backup now and then.

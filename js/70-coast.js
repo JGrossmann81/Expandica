@@ -490,7 +490,10 @@ window.EXC = window.EXC || {};
     if (p.start === 'custom' && p.startPt) return { id: 'custom', name: p.startPt.name || 'My start', st: p.startPt.st || '', lat: p.startPt.lat, lon: p.startPt.lon, custom: true };
     return Object.assign({ custom: false }, P.starts.find(x => x.id === p.start) || P.starts[0]);
   }
+  /* paths 3 and 4 (EXC_PLAN.extraPaths): pass 'north' or 'south'. path === true is the older path 2. */
+  const xPath = path => (typeof path === 'string' && PLN().extraPaths) ? (PLN().extraPaths.find(x => x.id === path) || null) : null;
   function ourRoute(path) {
+    const X = xPath(path); if (X) return X.wp.map(wpObj);
     const P2 = PLN().path2;
     if (path && P2) { const k2 = D.corridors.find(x => x.id === P2.id); if (!k2) return null; return [{ name: P2.start.name, st: P2.start.st, lat: P2.start.lat, lon: P2.start.lon }].concat(k2.wp.map(wpObj).slice(1)); }
     const k = D.corridors.find(x => x.id === (PLN().corridor || 'central')); if (!k) return null;
@@ -534,16 +537,18 @@ window.EXC = window.EXC || {};
     const B = BUD(), P = PLN(), wps = ourRoute(o.path); if (!B || !wps) return null;
     const c = ensure(), p = c.plan, b = c.bud, def = B.D.defaults;
     const hours = P.hoursChoices.indexOf(o.hours) >= 0 ? o.hours : p.hours, mph = eff(b.mph, def.mph);
+    const XP = xPath(o.path), DR = PLN().drive || { targetH: 2.5, radiusMi: 30, warnHours: 3.3 };
     const rural = o.path ? true : typeof o.rural === 'boolean' ? o.rural : p.rural !== false, RR = P.rural || { sites: 13, radiusMi: 60, warnHours: 6, penalty: { 1: 1.5, 2: 6, 3: 15 } };
     const cities = P.cities.map(w => ({ name: w[0], st: w[1], lat: w[2], lon: w[3] })).concat(wps.slice(1).map(w => ({ name: w.name, st: w.st, lat: w.lat, lon: w.lon })), [{ name: wps[0].name, st: wps[0].st, lat: wps[0].lat, lon: wps[0].lon }]);
     const corr = calc.length(wps, D.roadFactor);
     let sp, rc = null;
-    if (rural && (P.ruralTowns || []).length >= 2) {
-      rc = calc.ruralChain(wps, P.ruralTowns, { n: RR.sites, radius: RR.radiusMi, penalty: RR.penalty, warnHours: RR.warnHours, mph, factor: D.roadFactor, swaps: o.path ? {} : (o.swaps || p.swaps) });
+    if (rural && ((XP ? XP.towns : P.ruralTowns) || []).length >= 2) {
+      const nX = XP ? Math.max(2, Math.ceil(corr.road / (DR.targetH * mph)) + 1) : RR.sites;
+      rc = calc.ruralChain(wps, XP ? XP.towns : P.ruralTowns, { n: nX, radius: XP ? DR.radiusMi : RR.radiusMi, penalty: RR.penalty, warnHours: XP ? DR.warnHours : RR.warnHours, mph, factor: D.roadFactor, swaps: o.path ? {} : (o.swaps || p.swaps) });
       sp = { road: rc.roadMiles, straight: corr.straight, sites: rc.sites.length, legs: rc.legs, legMiles: rc.legMiles, legHours: rc.legHours,
         zones: rc.sites.map(z => ({ i: z.i, at: z.at, lat: z.lat, lon: z.lon, city: z.name, st: z.st, cityMi: null, legMiles: z.legMiles, legHours: z.legHours })) };
     } else sp = calc.sitePlan(wps, hours, mph, cities, B, D.roadFactor);
-    const ps = B.perSite(b), T = B.totals(sp.sites, ps), s0 = o.path ? Object.assign({ custom: false }, PLN().path2.start) : startPt();
+    const ps = B.perSite(b), T = B.totals(sp.sites, ps), s0 = XP ? Object.assign({ custom: false }, XP.start) : o.path ? Object.assign({ custom: false }, PLN().path2.start) : startPt();
     const zones = sp.zones.map((z, k) => {
       const row = stateRow(z.st), pt = { lat: z.lat, lon: z.lon }, rs = rc ? rc.sites[k] : null;
       return {
@@ -569,10 +574,10 @@ window.EXC = window.EXC || {};
     const endO = rc ? { name: last.city, st: last.st, lat: last.lat, lon: last.lon } : { name: wps[wps.length - 1].name, st: wps[wps.length - 1].st, lat: wps[wps.length - 1].lat, lon: wps[wps.length - 1].lon };
     return {
       app: 'Expandica', kind: 'grossmann-path', mode: rc ? 'rural' : 'city', rural: !!rc, asof: P.asof, note: P.honesty, startNote: P.startNote, endNote: rc ? (P.ruralEndNote || P.endNote) : P.endNote,
-      corridor: o.path ? PLN().path2.id : (P.corridor || 'central'), path: o.path ? 'second' : 'first', start: startO, end: endO,
+      corridor: XP ? XP.id : o.path ? PLN().path2.id : (P.corridor || 'central'), path: XP ? XP.id : o.path ? 'second' : 'first', start: startO, end: endO,
       corridorStart: { name: s0.name, st: s0.st, lat: s0.lat, lon: s0.lon, assumption: true }, corridorEnd: { name: wps[wps.length - 1].name, st: wps[wps.length - 1].st, lat: wps[wps.length - 1].lat, lon: wps[wps.length - 1].lon },
       hours, mph, roadFactor: D.roadFactor, roadMiles: r1(sp.road), straightMiles: r1(sp.straight), corridorRoadMiles: r1(corr.road), sites: sp.sites, legCount: sp.legs, legMiles: r1(sp.legMiles), legHours: r2(sp.legHours),
-      maxLegMiles: r1(rc ? rc.maxLegMiles : sp.legMiles), maxLegHours: r2(rc ? rc.maxLegHours : sp.legHours), warnHours: RR.warnHours, warnings: rc ? rc.warnings.slice() : [],
+      maxLegMiles: r1(rc ? rc.maxLegMiles : sp.legMiles), maxLegHours: r2(rc ? rc.maxLegHours : sp.legHours), warnHours: XP ? DR.warnHours : RR.warnHours, warnings: rc ? rc.warnings.slice() : [],
       ruralLand: rc ? (P.ruralLand || null) : null, ruralHow: rc ? (P.ruralHow || null) : null, citySites: rc ? B.legs(corr.road, hours, mph).sites : sp.sites,
       zones, legs, tierSelected: p.tier, tiers, contingencyPct: ps.contingency, byHours,
       assumptions: { bareSize: b.bareSize, bareThk: b.bareThk, bareConc: b.bareConc, bareShedFlat: b.bareShedFlat, barePower: b.barePower, bareBatt: b.bareBatt, bareShed: b.bareShed, barePs: b.barePs, land: b.land, closing: b.closing, kit: b.kit, fire: b.fire, gate: b.gate, shedLo: b.shedLo, shedHi: b.shedHi, cabLo: b.cabLo, cabHi: b.cabHi, cont: b.cont, mph, shedLabel: 'Shed or storage building: my planning assumption, not a quote' },
@@ -659,6 +664,17 @@ window.EXC = window.EXC || {};
       <p class="xs dim">${esc((PLN().path2 || {}).note || '')} Path 2 is read-only here: see its towns on the Map tab. ${(b.warnings || []).map(w => esc(w)).join(' ')}</p>
       <ol class="sm">${b.zones.map(z => `<li>${esc(z.city)}, ${esc(z.st)} <span class="dim xs">${z.i === 1 ? 'start' : esc(mi0(z.legMiles)) + ', ' + esc(OA.hm(z.legHours))}</span></li>`).join('')}</ol></div>`;
   }
+  function legsCard() {
+    const A = EXC.allPaths(); if (!A) return '';
+    const m = v => esc(money(v)), xs = (PLN().extraPaths || []);
+    const one = (q, x) => `<details class="card"><summary><b style="color:${x.color}">Path ${x.num}: ${esc(x.label)}</b> <span class="tag g">${esc(q.sites)} sites</span></summary>
+      <p class="sm">${esc(q.sites)} small-town sites from ${esc(q.start.name)}, ${esc(q.start.st)} to ${esc(q.end.name)}, ${esc(q.end.st)}: about ${esc(mi0(q.roadMiles))}, average leg ${esc(OA.hm(q.legHours))}, longest ${esc(OA.hm(q.maxLegHours))}. ${q.bareBones ? 'Bare-bones tier: ' + m(q.bareBones.chain[0]) + ' to ' + m(q.bareBones.chain[1]) + ' for the whole path.' : ''}</p>
+      <p class="xs dim">${esc(x.note)} ${(q.warnings || []).map(w => esc(w)).join(' ')}</p>
+      <ol class="sm">${q.zones.map(z => `<li>${esc(z.city)}, ${esc(z.st)} <span class="dim xs">${z.i === 1 ? 'start' : esc(mi0(z.legMiles)) + ', ' + esc(OA.hm(z.legHours))}</span></li>`).join('')}</ol></details>`;
+    return `<div class="card hot"><div class="ct"><b>North and south legs (paths 3 and 4)</b><span class="tag g">${esc(A.paths[2].sites + A.paths[3].sites)} sites</span></div>
+      <p class="sm">Shorter hops: a stop about every 2 to 3 hours of driving, so a family can add a new spot without a long travel day. Same idea as before: a metal shed and power, nothing more. All four paths together: ${esc(A.sites)} sites${A.bareChain ? ', ' + m(A.bareChain[0]) + ' to ' + m(A.bareChain[1]) + ' on the bare-bones tier' : ''}.</p>
+      <p class="xs dim">Towns were picked from memory and are NOT checked; land prices and county rules are NOT checked. Read only here: see the stops on the Map tab.</p></div>` + A.paths.slice(2).map((q, i) => one(q, xs[i])).join('');
+  }
   function ourHeader(Q) {
     const p = ensure().plan, P = PLN(), s0 = startPt();
     const R = Q.rural, wrn = Q.warnings || [];
@@ -676,6 +692,7 @@ window.EXC = window.EXC || {};
       <button class="btn gold block" data-act="excStart">Start this plan</button>
       <p class="xs dim">Only selects the corridor, spacing${R ? '' : ' and drive hours'} and adds one item to your quests. It does not create or change any parcel.</p></div>
       ${bothCard()}
+      ${legsCard()}
       <div class="exc-nav" style="padding-top:0">${OSEC.map(s => `<button class="${ourSec === s[0] ? 'on' : ''}" data-act="excOurSec" data-v="${s[0]}">${esc(s[1])}</button>`).join('')}</div>`;
   }
   const popLine = t => t.popVerified && t.pop != null ? 'About ' + t.pop.toLocaleString('en-US') + ' people (' + (t.popNote || 'source on file') + ').' : 'Size not checked (thought to be a small town; look it up).';
@@ -1031,5 +1048,13 @@ window.EXC = window.EXC || {};
   /* second path (read only): the I-40 direction chain; both paths share the same cost assumptions */
   EXC.secondPath = () => { const Q = ourPlan({ path: true }); return Q; };
   EXC.bothPaths = () => { const a = ourPlan({ rural: true }), b = ourPlan({ path: true }); if (!a || !b) return null; const sum = (x, y) => [x[0] + y[0], x[1] + y[1]]; return { sites: a.sites + b.sites, first: a, second: b, bareChain: a.bareBones && b.bareBones ? sum(a.bareBones.chain, b.bareBones.chain) : null, perSiteBare: a.bareBones ? a.bareBones.perSite : null }; };
+  /* paths 3 (north) and 4 (south): 2 to 3 hour spacing, same bare-bones site; read only */
+  EXC.thirdPath = () => ourPlan({ path: 'north' });
+  EXC.fourthPath = () => ourPlan({ path: 'south' });
+  EXC.allPaths = () => {
+    const L = [ourPlan({ rural: true }), ourPlan({ path: true }), ourPlan({ path: 'north' }), ourPlan({ path: 'south' })]; if (L.some(x => !x)) return null;
+    const sites = L.reduce((n, q) => n + q.sites, 0), ok = L.every(q => q.bareBones), chain = ok ? [0, 1].map(i => L.reduce((n, q) => n + q.bareBones.chain[i], 0)) : null;
+    return { sites, paths: L, bareChain: chain, perSiteBare: L[0].bareBones ? L[0].bareBones.perSite : null };
+  };
   EXC.planText = () => { const Q = ourPlan(); return Q ? planText(Q) : ''; };
 })();

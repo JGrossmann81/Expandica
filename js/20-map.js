@@ -48,13 +48,15 @@ window.EXM = window.EXM || {};
   /* ---------- tab ---------- */
   function counts() { const m = EX.parcels.byStage(); return EX.STAGES.map(s => ({ s, n: m[s.id].length })); }
   /* Grossmann Crossing overlay: the rural chain from Coast, Our plan (planning aid only) */
-  function crossing(second) { try { const Q = window.EXC && (second ? EXC.secondPath && EXC.secondPath() : EXC.ourPlan && EXC.ourPlan({ rural: true })); return Q && Q.zones && Q.zones.length ? Q : null; } catch (e) { return null; } }
-  function crossingCard(Q, Q2) {
+  function crossing(second) { try { const Q = window.EXC && (second === 'north' ? EXC.thirdPath && EXC.thirdPath() : second === 'south' ? EXC.fourthPath && EXC.fourthPath() : second ? EXC.secondPath && EXC.secondPath() : EXC.ourPlan && EXC.ourPlan({ rural: true })); return Q && Q.zones && Q.zones.length ? Q : null; } catch (e) { return null; } }
+  function crossingCard(Q, Q2, Q3, Q4) {
     if (!Q) return '';
     const rows = (q, off) => q.zones.map((z, i) => `<div class="row sm"><span><b>${i + 1 + off}.</b> ${esc(z.city)}, ${esc(z.st)}</span><span class="dim xs">${i ? esc(Math.round(z.legMiles)) + ' mi, ' + esc(Math.round(z.legHours * 10) / 10) + ' h' : 'start'}</span></div>`).join('');
     const hd = (q, t, c) => `<div class="ct"><b style="color:${c}">${t}: ${esc(q.zones.length)} stops</b><span class="xs dim">avg ${esc(Math.round(q.legHours * 10) / 10)} h, longest ${esc(Math.round(q.maxLegHours * 10) / 10)} h</span></div>`;
     return `<div class="card">${hd(Q, 'Path 1, Central (gold)', '#e8b04a')}<p class="sm dim">Small-town areas, straight-line miles x 1.25, so real drives differ. Land prices were NOT checked. Change it in Coast, Our plan.</p>${rows(Q, 0)}</div>` +
-      (Q2 ? `<div class="card">${hd(Q2, 'Path 2, Southern (blue)', '#7ec4e8')}<p class="sm dim">I-40 direction through the southwest, Oklahoma, Arkansas, Tennessee and North Carolina. Towns picked from memory; sizes and positions are NOT checked. Land prices were NOT checked.</p>${rows(Q2, Q.zones.length)}</div>` : '');
+      (Q2 ? `<div class="card">${hd(Q2, 'Path 2, Southern (blue)', '#7ec4e8')}<p class="sm dim">I-40 direction through the southwest, Oklahoma, Arkansas, Tennessee and North Carolina. Towns picked from memory; sizes and positions are NOT checked. Land prices were NOT checked.</p>${rows(Q2, Q.zones.length)}</div>` : '') +
+      (Q3 ? `<div class="card">${hd(Q3, 'Path 3, Northern (green)', '#9be08f')}<p class="sm dim">I-90 / I-94 direction, a stop every 2 to 3 hours. Towns picked from memory; sizes and positions are NOT checked. Land prices were NOT checked.</p>${rows(Q3, Q.zones.length + Q2.zones.length)}</div>` : '') +
+      (Q4 ? `<div class="card">${hd(Q4, 'Path 4, Deep south (coral)', '#f08a6b')}<p class="sm dim">I-10 direction, a stop every 2 to 3 hours. Towns picked from memory; sizes and positions are NOT checked. Land prices were NOT checked.</p>${rows(Q4, Q.zones.length + Q2.zones.length + (Q3 ? Q3.zones.length : 0))}</div>` : '');
   }
   function mapSvg(list, circuit) {
     const g = geo(), y0 = g.H + 4, stops = circuit.stops.map(place).filter(q => q && q.main);
@@ -65,7 +67,7 @@ window.EXM = window.EXM || {};
     s += `<rect class="exm-inset" x="${AK.x}" y="${y0}" width="${AK.w}" height="${AK.h}" rx="6"/><text class="exm-lbl" x="${AK.x + 6}" y="${y0 + 11}">Alaska</text>`;
     s += `<rect class="exm-inset" x="${HI.x}" y="${y0}" width="${HI.w}" height="${HI.h}" rx="6"/><text class="exm-lbl" x="${HI.x + 6}" y="${y0 + 11}">Hawaii</text>`;
     if (stops.length > 1) s += `<polyline class="exm-route" points="${stops.map(q => q.x.toFixed(1) + ',' + q.y.toFixed(1)).join(' ')}"/>`;
-    [[crossing(), '#e8b04a', 0], [crossing(true), '#7ec4e8', 13]].forEach(([gp, col2, off]) => {
+    (function () { const g1 = crossing(), g2 = crossing(true), g3 = crossing('north'), g4 = crossing('south'), n1 = g1 ? g1.zones.length : 0, n2 = g2 ? g2.zones.length : 0, n3 = g3 ? g3.zones.length : 0; return [[g1, '#e8b04a', 0], [g2, '#7ec4e8', n1], [g3, '#9be08f', n1 + n2], [g4, '#f08a6b', n1 + n2 + n3]]; })().forEach(([gp, col2, off]) => {
       if (!gp) return;
       s += `<polyline class="exm-route" style="stroke:${col2};stroke-dasharray:none;opacity:.8" points="${gp.zones.map(z => { const q = g.pr(z.lon, z.lat); return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ')}"/>`;
       gp.zones.forEach((z, i) => { const q = g.pr(z.lon, z.lat); s += `<g><title>${esc(z.city + ', ' + z.st)}</title><circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="8.5" fill="${col2}" stroke="#14110a" stroke-width="1.2"/><text x="${q[0].toFixed(1)}" y="${(q[1] + 3.6).toFixed(1)}" text-anchor="middle" font-size="${i + 1 + off > 9 ? 8.5 : 10}" font-weight="700" fill="#14110a">${i + 1 + off}</text></g>`; });
@@ -116,7 +118,7 @@ window.EXM = window.EXM || {};
     if (unpinned.length) lists += `<div class="card"><div class="ct"><b>Not on the map yet</b></div><p class="sm dim">These have no usable coordinates. Open one and add latitude and longitude, or use your location.</p>${unpinned.slice(0, 80).map(parcelRow).join('')}</div>`;
     const pinned = list.filter(p => place(p));
     if (pinned.length) lists += `<div class="card"><div class="ct"><b>Parcels on the map</b><span class="xs dim">${pinned.length}</span></div>${pinned.slice(0, 80).map(parcelRow).join('')}${pinned.length > 80 ? '<p class="xs dim">Showing the first 80.</p>' : ''}</div>`;
-    return hdr + stats + top + `<div class="exm-map">${mapSvg(all, c)}</div><p class="xs dim" style="margin:-6px 2px 12px">Simplified outline for orientation. Pins are only as exact as the coordinates you enter. Dashed line = Family Circuit. Gold = path 1, blue = path 2 (Grossmann Crossing, 26 stops).</p>` + crossingCard(crossing(), crossing(true)) + circuitCard(c) + lists + `<p class="xs dim" style="text-align:center;margin:18px 0">Expandica version ${esc((OA.meta && OA.meta.version) || '')}</p>`;
+    return hdr + stats + top + `<div class="exm-map">${mapSvg(all, c)}</div><p class="xs dim" style="margin:-6px 2px 12px">Simplified outline for orientation. Pins are only as exact as the coordinates you enter. Dashed line = Family Circuit. Gold = path 1, blue = path 2 (Grossmann Crossing, 26 stops).</p>` + crossingCard(crossing(), crossing(true), crossing('north'), crossing('south')) + circuitCard(c) + lists + `<p class="xs dim" style="text-align:center;margin:18px 0">Expandica version ${esc((OA.meta && OA.meta.version) || '')}</p>`;
   }
   OA.tab({ id: 'map', label: 'Map', icon: 'map', order: 1, render: () => render() });
 
