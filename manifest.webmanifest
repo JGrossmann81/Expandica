@@ -1,0 +1,29 @@
+{
+ "name": "Expandica",
+ "short_name": "Expandica",
+ "description": "Our family expansion: scout land, plan a cabin, size solar power, and link a road trip stop at a time.",
+ "start_url": "./index.html",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#14110a",
+ "theme_color": "#14110a",
+ "icons": [
+  {
+   "src": "img/icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "img/icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "img/icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}

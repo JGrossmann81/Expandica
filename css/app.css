@@ -1,0 +1,29 @@
+/* Expandica theme + Family Map (.exm-) styles */
+body[data-app=expandica]{--bg:#14110a;--bg2:#2d2414;--panel:#1f1911;--panel2:#2a2216;--line:#524229;--gold:#e8b04a;--gold2:#cf9a35;--dim:#bfae8f;--accent:#e8b04a}
+.exm-stats{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.exm-pill{display:inline-flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 10px;font-size:.8rem;color:var(--dim);min-height:30px}
+.exm-pill b{color:var(--text)}
+.exm-dot{width:10px;height:10px;border-radius:50%;flex:none;border:1px solid #0008}
+.exm-map{background:radial-gradient(ellipse at 50% 40%,#1b2a30 0,#111a1e 100%);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;margin-bottom:12px}
+.exm-map svg{display:block;width:100%;height:auto}
+.exm-land{fill:#3a2f1c;stroke:#7a6335;stroke-width:1}
+.exm-lake{fill:#16222a;stroke:#2e4a55;stroke-width:.6}
+.exm-grat{stroke:#ffffff10;stroke-width:.5;fill:none}
+.exm-inset{fill:#241d11;stroke:#7a6335;stroke-width:.8}
+.exm-lbl{fill:#bfae8f;font-size:8px;font-family:Lora,Georgia,serif}
+.exm-route{fill:none;stroke:#e8b04a;stroke-width:1.6;stroke-dasharray:4 3;opacity:.8}
+.exm-pin{stroke:#14110a;stroke-width:1.6;cursor:pointer}
+.exm-hit{fill:transparent;cursor:pointer}
+.exm-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.exm-bar .btn{margin:0;text-align:center}
+.exm-empty{text-align:center}
+.exm-empty .row{justify-content:center;flex-wrap:wrap}
+.exm-steps{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.exm-hist{font-size:.84rem;color:var(--dim)}
+.exm-hist div{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--line)}
+.exm-hist div:last-child{border:0}
+.exm-leg{display:flex;align-items:center;gap:8px;padding:6px 0 6px 14px;color:var(--dim);font-size:.82rem;border-left:2px dashed var(--line);margin-left:12px}
+.exm-stop{display:flex;align-items:center;gap:10px;padding:6px 0;cursor:pointer;min-height:44px}
+.exm-num{width:26px;height:26px;border-radius:50%;background:var(--gold);color:#20170a;display:grid;place-items:center;font-weight:700;font-size:.82rem;flex:none}
+.exm-res{max-height:none}
+.exm-two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
